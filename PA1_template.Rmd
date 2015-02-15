@@ -1,0 +1,126 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+
+
+## Loading and preprocessing the data
+```{r}
+temp<-"activity.zip"
+data <- read.csv(unz(temp, "activity.csv"))
+# unlink(temp)
+```
+
+## What is mean total number of steps taken per day?
+
+For this part of the assignment, you can ignore the missing values in the dataset.
+1.Calculate the total number of steps taken per day
+```{r}
+totalSteps<-tapply(data$steps, data$date, sum)
+totalSteps
+```
+2.If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
+```{r}
+hist(totalSteps)
+```
+3.Calculate and report the mean and median of the total number of steps taken per day
+
+```{r}
+meanSteps<-tapply(data$steps, data$date, mean)
+meanSteps
+medianSteps<-tapply(data$steps, data$date, median)
+medianSteps
+```
+## What is the average daily activity pattern?
+
+1.Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+dailyActivity<-tapply(data$steps, data$interval, mean, na.rm=TRUE)
+plot(dailyActivity, type = "l")
+```
+
+2.Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+z<-max(dailyActivity)
+a<-dailyActivity==z
+
+names(dailyActivity[a])
+
+```
+## Imputing missing values
+
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+1.Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+sum(is.na(data$steps))
+```
+
+2.Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+The missing values will be replaced with the mean for that day, if there is no data in that day, missing values will be replaced with the mean for the entire data set. 
+
+3.Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r}
+for (i in unique(data$date)) {
+  data[is.na(data$steps)&(data$date==i), 1] <- meanSteps[i]
+}
+
+data[is.na(data)] <- mean(data$steps, na.rm=TRUE)
+```
+
+4.Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```{r}
+
+newTotalSteps<-tapply(data$steps, data$date, sum)
+hist(newTotalSteps)
+newMeanSteps<-tapply(data$steps, data$date, mean)
+newMeanSteps
+newMedianSteps<-tapply(data$steps, data$date, median)
+newMedianSteps
+newDailyActivity<-tapply(data$steps, data$interval, mean, na.rm=TRUE)
+newDailyActivity
+```
+yes,  these values differ from the estimates from the first part of the assignment. replace missing values with mean of the day will increase the estimates of the total daily number of steps?
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+1.Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+```{r}
+data$day<-weekdays(as.POSIXlt(data$date))
+for (i in c("Monday","Tuesday","Wednesday","Thursday","Friday")) {
+data[data$day==i,4]<-"weekday"
+}
+for (i in c("Saturday","Sunday")) {
+  data[data$day==i,4]<-"weekend"
+}
+```
+
+2.Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+
+
+```{r}
+weekdayData<-data[data$day=="weekday",]
+weekdayDailyActivity<-tapply(weekdayData$steps, weekdayData$interval, mean, na.rm=TRUE)
+
+weekendData<-data[data$day=="weekend",]
+weekendDailyActivity<-tapply(weekendData$steps, weekendData$interval, mean, na.rm=TRUE)
+#par(mfrow=c(2,1))
+plot(weekdayDailyActivity, type = "l", main = "weekday", xlab="interval", ylab="Number of steps")
+plot(weekendDailyActivity, type = "l", main = "weekend", xlab="interval", ylab="Number of steps")
+
+```
+
+
+
+
+
+
+
